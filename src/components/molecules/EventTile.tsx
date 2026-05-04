@@ -3,10 +3,9 @@ import { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, CardContent } from '@/src/components/molecules/Card';
 import type { ThemePalette } from '@/src/styles/colors';
 import { textScale } from '@/src/styles/text-styles';
-import { spacing } from '@/src/styles/view-styles';
+import { cardChrome, spacing } from '@/src/styles/view-styles';
 
 export type EventTileSeverity = 'neutral' | 'warning' | 'critical';
 
@@ -66,61 +65,62 @@ export const EventTile = memo(function EventTile({
   const a11yLabel = [type, displayValue(value), subtitle, timestamp].filter(Boolean).join('. ');
 
   return (
-    <Card
-      colors={colors}
-      paddingHorizontal={spacing.lg}
-      paddingVertical={spacing.sm}
-      style={[{ borderColor: severityBorderColor }, style]}
+    <View
       accessibilityLabel={a11yLabel}
+      style={[
+        cardChrome(colors),
+        styles.tilePad,
+        { borderColor: severityBorderColor },
+        style,
+      ]}
     >
-      <CardContent>
-        <View style={styles.row}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.secondary }]}>
-            <Ionicons name={iconName} size={18} color={resolvedIconColor} accessibilityElementsHidden />
-          </View>
+      <View style={styles.row}>
+        <View style={[styles.iconWrap, { backgroundColor: colors.secondary }]}>
+          <Ionicons name={iconName} size={18} color={resolvedIconColor} accessibilityElementsHidden />
+        </View>
 
-          <View style={styles.textRow}>
+        <View style={styles.textRow}>
+          <Text
+            style={[lineTextBase, styles.typePiece, { color: colors.mutedForeground }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {type}
+          </Text>
+          <Text
+            style={[lineTextBase, styles.valuePiece, { color: colors.foreground }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {displayValue(value)}
+          </Text>
+          {subtitle ? (
             <Text
-              style={[lineTextBase, styles.typePiece, { color: colors.mutedForeground }]}
+              style={[lineTextBase, styles.subPiece, { color: colors.mutedForeground }]}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
-              {type}
-            </Text>
-            <Text
-              style={[lineTextBase, styles.valuePiece, { color: colors.foreground }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {displayValue(value)}
-            </Text>
-            {subtitle ? (
-              <Text
-                style={[lineTextBase, styles.subPiece, { color: colors.mutedForeground }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {subtitle}
-              </Text>
-            ) : null}
-          </View>
-
-          {timestamp ? (
-            <Text
-              style={[lineTextBase, styles.timestampPiece, { color: colors.mutedForeground }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {timestamp}
+              {subtitle}
             </Text>
           ) : null}
         </View>
-      </CardContent>
-    </Card>
+
+        {timestamp ? (
+          <Text
+            style={[lineTextBase, styles.timestampPiece, { color: colors.mutedForeground }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {timestamp}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  tilePad: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
