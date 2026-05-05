@@ -10,6 +10,7 @@ import { DebugPanel } from '@/src/components/organisms/DebugPanel';
 import { EventList } from '@/src/components/organisms/EventList';
 import { PhotoFab } from '@/src/components/organisms/PhotoFab';
 import { useGreenhouseLive } from '@/src/hooks/useGreenhouseLive';
+import { usePlantPhotoUpload } from '@/src/hooks/usePlantPhotoUpload';
 import { textScale } from '@/src/styles/text-styles';
 import { layout, screenPaddingBottom, spacing } from '@/src/styles/view-styles';
 import { useAppTheme } from '@/src/ui/useAppTheme';
@@ -29,6 +30,7 @@ export default function GreenhouseScreen() {
   const colors = useAppTheme();
   const insets = useSafeAreaInsets();
   const live = useGreenhouseLive();
+  const plantPhotos = usePlantPhotoUpload(live.connectionStatus);
 
   const fabBottom = Math.max(insets.bottom, spacing.lg) + spacing.md;
   const padBottom = screenPaddingBottom(fabBottom);
@@ -175,9 +177,9 @@ export default function GreenhouseScreen() {
           </ScrollView>
           <PhotoFab
             colors={colors}
-            pendingCount={0}
+            pendingCount={plantPhotos.pendingCount}
             bottomOffset={fabBottom}
-            onPress={() => undefined}
+            onPress={() => void plantPhotos.captureAndQueue()}
           />
         </View>
       </SafeAreaView>

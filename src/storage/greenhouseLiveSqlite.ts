@@ -55,6 +55,10 @@ async function ensureSchema(db: SQLiteDatabase) {
       reason TEXT NOT NULL,
       message TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS photo_upload_queue (
+      id TEXT PRIMARY KEY NOT NULL,
+      created_at INTEGER NOT NULL
+    );
   `);
 }
 
@@ -230,4 +234,25 @@ export async function getRangesMap(db: SQLiteDatabase): Promise<ApiRanges | null
     humidity: { min: h.min, max: h.max },
     co2: { min: c.min, max: c.max },
   };
+}
+
+export type PhotoUploadQueueRow = { id: string; created_at: number };
+
+export async function enqueuePhotoUploadJob(db: SQLiteDatabase, fileName: string, createdAtMs: number): Promise<void> {
+  await db.runAsync(`INSERT INTO photo_upload_queue (id, created_at) VALUES (?, ?)`, [fileName, createdAtMs]);
+}
+
+export async function getPendingPhotoUploadJobsAscending(db: SQLiteDatabase): Promise<PhotoUploadQueueRow[]> {
+  return db.getAllAsync<PhotoUploadQueueRow>(
+    `SELECT id, created_at FROM photo_upload_queue ORDER BY created_at ASC`,
+  );
+}
+
+export async function removePhotoUploadJob(db: SQLiteDatabase, fileName: string): Promise<void> {
+  await db.runAsync(`DELETE FROM photo_upload_queue WHERE id = ?`, [fileName]);
+}
+
+export async function countPendingPhotoUploadJobs(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ c: number }>(`SELECT COUNT(*) AS c FROM photo_upload_queue`);
+  return row?.c ?? 0;
 }
