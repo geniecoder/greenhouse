@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { EventListItem } from '@/src/components/organisms/EventList';
 import { EMA_ALPHA, WS_URL } from '@/src/config/greenhouseLive';
@@ -28,7 +28,7 @@ import {
   upsertHistoryRow,
 } from '@/src/storage/greenhouseLiveSqlite';
 import type { UseGreenhouseLiveResult } from '@/src/types/liveDashboard';
-import { AGE_TICK_MS } from '@/src/utils/constants';
+import { AGE_TICK_MS, LAST_SNAPSHOT_LABEL_TICK_MS } from '@/src/utils/constants';
 import { createInitialLiveDebugMetrics } from '@/src/utils/debugMetrics';
 import { historyRowsToTempSeries } from '@/src/utils/historySeries';
 import { isWsMessage } from '@/src/utils/wsGuards';
@@ -44,6 +44,8 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
   const [summary, setSummary] = useState('');
   const [siteName, setSiteName] = useState('Greenhouse');
   const [snapshotIso, setSnapshotIso] = useState<string>(new Date().toISOString());
+  /** Recompute "Last update …" as wall-clock time passes (snapshot ISO alone does not change). */
+  const [lastUpdateLabelTick, setLastUpdateLabelTick] = useState(0);
   const [debugMetrics, setDebugMetrics] = useState(createInitialLiveDebugMetrics);
 
   const dbRef = useRef<SQLiteDatabase | null>(null);
@@ -51,6 +53,14 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
   const lastMsgAtRef = useRef(Date.now());
   const bootKeyRef = useRef(bootKey);
   bootKeyRef.current = bootKey;
+
+  /** Advance clock so header shows “Ns ago” / wall time after the first seconds without a new message. */
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLastUpdateLabelTick((n) => n + 1);
+    }, LAST_SNAPSHOT_LABEL_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
 
   /** Keep debug “last event age” ticking while idle. */
   useEffect(() => {
@@ -63,7 +73,7 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
     return () => clearInterval(id);
   }, []);
 
-  const lastSnapshotLabel = useMemo(() => formatLastUpdateLabel(snapshotIso), [snapshotIso]);
+  const lastSnapshotLabel = formatLastUpdateLabel(snapshotIso, lastUpdateLabelTick);
 
   /** Snapshot HTTP → SQLite seed → readings + chart + UI + debug baseline. */
   useEffect(() => {

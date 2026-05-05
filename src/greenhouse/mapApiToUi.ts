@@ -28,6 +28,16 @@ export function prettifyGreenhouseId(id: string): string {
     .join(' · ');
 }
 
+function formatTime12hAmPmFromIso(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
 function formatClockFromIso(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -37,14 +47,13 @@ function formatClockFromIso(iso: string): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-/** Relative-ish label for snapshot / last reading time */
-export function formatLastUpdateLabel(iso: string): string {
+/** @param _recalcEpoch — bump when wall time advances without a new ISO snapshot (refreshes label after “just now”). */
+export function formatLastUpdateLabel(iso: string, _recalcEpoch?: number): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return `Updated ${iso}`;
   const secs = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
-  if (secs < 5) return 'Last update just now';
-  if (secs < 120) return `Last update ${secs}s ago`;
-  return `Last update ${formatClockFromIso(iso)}`;
+  if (secs <= 5) return 'Last update just now';
+  return `Last update ${formatTime12hAmPmFromIso(iso)}`;
 }
 
 function withinRange(val: number, min: number, max: number): boolean {
