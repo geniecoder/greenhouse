@@ -8,6 +8,8 @@ import type { ThemePalette } from '@/src/styles/colors';
 import { textScale } from '@/src/styles/text-styles';
 import { layout, sensorTileChrome, spacing } from '@/src/styles/view-styles';
 
+const ALERT_ICON_SIZE = 14;
+
 export interface SensorTileProps {
   model: SensorTileModel;
   colors: ThemePalette;
@@ -80,6 +82,7 @@ export const SensorTile = memo(function SensorTile({
       {...(a11yRole ? { accessibilityRole: a11yRole } : {})}
       accessibilityLabel={model.label}
       accessibilityValue={{ text: a11yText }}
+      accessibilityHint={model.helperText || undefined}
       style={[chrome, styles.inner, style]}
     >
       <View style={styles.headRow}>
@@ -94,15 +97,17 @@ export const SensorTile = memo(function SensorTile({
           </View>
           <Text style={[textScale.sm, { color: colors.mutedForeground }]}>{model.label}</Text>
         </View>
-        {(model.variant === 'alert' || model.variant === 'error') && (
-          <Ionicons
-            name="warning-outline"
-            size={20}
-            color={model.variant === 'error' ? colors.destructive : colors.warning}
-            accessibilityRole="image"
-            accessibilityLabel="Threshold exceeded"
-          />
-        )}
+        <View style={styles.alertSlot}>
+          {(model.variant === 'alert' || model.variant === 'error') && (
+            <Ionicons
+              name="warning-outline"
+              size={ALERT_ICON_SIZE}
+              color={model.variant === 'error' ? colors.destructive : colors.warning}
+              accessibilityRole="image"
+              accessibilityLabel="Threshold exceeded"
+            />
+          )}
+        </View>
       </View>
 
       <View style={styles.readingRow}>
@@ -129,20 +134,21 @@ export const SensorTile = memo(function SensorTile({
           </Text>
         </View>
       </View>
-
-      {model.helperText ? (
-        <Text style={[textScale.xs, { color: tier === 'error' ? colors.destructive : colors.warning, marginTop: spacing.sm }]}>
-          {model.helperText}
-        </Text>
-      ) : null}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   inner: { padding: spacing.lg, gap: spacing.md },
-  headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 },
+  headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1, minWidth: 0 },
+  /** Keeps tile height stable whether or not alert icon shows */
+  alertSlot: {
+    width: ALERT_ICON_SIZE + 4,
+    height: ALERT_ICON_SIZE + 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   iconBadge: {
     padding: 8,
     borderRadius: spacing.sm + 4,

@@ -18,7 +18,6 @@ export interface EventListItem {
   severity?: EventTileSeverity;
 }
 
-/** Dummy rows for dashboards / previews */
 export const eventListDummyItems: EventListItem[] = [
   {
     id: '1',
@@ -56,10 +55,9 @@ export interface EventListProps {
   title?: string;
 }
 
-/** Bordered section; header row + stacked `EventTile` rows */
 export const EventList = memo(function EventList({
   colors,
-  items = eventListDummyItems,
+  items = [],
   title = 'Recent Events',
 }: EventListProps) {
   const countLabel = `${items.length} event${items.length !== 1 ? 's' : ''}`;

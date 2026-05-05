@@ -38,7 +38,7 @@ export const StatusPill = memo(function StatusPill({ status, colors, compact }: 
         return {
           bg: colors.destructive,
           fg: colors.destructiveForeground,
-          icon: 'cloud-off-outline' as keyof typeof Ionicons.glyphMap,
+          icon: 'cloud-offline-outline' as keyof typeof Ionicons.glyphMap,
         };
     }
   }, [colors, status]);

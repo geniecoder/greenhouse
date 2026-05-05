@@ -13,24 +13,30 @@ export interface HeaderProps {
   connectionStatus: ConnectionStatus;
   lastSnapshotLabel: string;
   summary: string;
+  sensorAdvisory?: string;
   colors: ThemePalette;
 }
 
-/** Compact header strip (~40% shorter than original): tight padding, smaller type, merged meta */
 export const Header = memo(function Header({
   brandTitle = 'Greenhouse Guard',
   facilityName,
   connectionStatus,
   lastSnapshotLabel,
   summary,
+  sensorAdvisory,
   colors,
 }: HeaderProps) {
   const metaFg = `${colors.primaryForeground}E6`;
 
-  const statusLine = useMemo(
-    () => `${lastSnapshotLabel}${summary ? ` · ${summary}` : ''}`.trim(),
-    [lastSnapshotLabel, summary],
-  );
+  const statusLine = useMemo(() => {
+    const detail = [summary.trim(), (sensorAdvisory ?? '').trim()].filter((s) => s.length > 0).join(' · ');
+    const timing = lastSnapshotLabel.trim();
+    if (!timing) return detail;
+    if (!detail) return timing;
+    return `${timing} · ${detail}`;
+  }, [lastSnapshotLabel, summary, sensorAdvisory]);
+
+  const a11yStatus = useMemo(() => statusLine.replace(/\s*·\s*/g, '. '), [statusLine]);
 
   return (
     <View
@@ -43,6 +49,7 @@ export const Header = memo(function Header({
           elevation: Platform.OS === 'android' ? 4 : undefined,
         },
       ]}
+      accessibilityLabel={a11yStatus}
     >
       <View style={styles.topRow}>
         <View style={styles.titleColumn}>
@@ -61,9 +68,11 @@ export const Header = memo(function Header({
         </View>
         <StatusPill status={connectionStatus} colors={colors} compact />
       </View>
-      <Text style={[styles.statusLine, { color: metaFg }]} numberOfLines={2}>
-        {statusLine}
-      </Text>
+      {statusLine ? (
+        <Text style={[styles.statusLine, { color: metaFg }]} numberOfLines={1}>
+          {statusLine}
+        </Text>
+      ) : null}
     </View>
   );
 });

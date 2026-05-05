@@ -59,8 +59,9 @@ export const DebugPanel = memo(function DebugPanel({
           <MetricCell colors={colors} label="Events/sec (EMA)" value={metrics.eventsPerSecEma.toFixed(2)} style={styles.metricSlot} />
           <MetricCell colors={colors} label="Reconnect Count" value={`${metrics.reconnectCount}`} style={styles.metricSlot} />
           <MetricCell colors={colors} label="Sequence #" value={`${metrics.sequence}`} style={styles.metricSlot} />
-          <MetricCell colors={colors} label="Duplicates" value={`${metrics.duplicateCount}`} style={styles.metricSlot} />
           <MetricCell colors={colors} label="Version" value={`${metrics.version}`} style={styles.metricSlot} />
+          <MetricCell colors={colors} label="Duplicates" value={`${metrics.duplicateCount}`} style={styles.metricSlot} />
+          <MetricCell colors={colors} label="Gap Count" value={`${metrics.gapCount}`} style={styles.metricSlot} />
         </View>
       ) : null}
     </View>

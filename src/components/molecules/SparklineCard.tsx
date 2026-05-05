@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { SparklineDatum } from '@/src/greenhouse/types';
@@ -15,7 +15,6 @@ export interface SparklineCardProps {
   colors: ThemePalette;
 }
 
-/** Ref Sparkline — bordered section + header row + chart */
 export const SparklineCard = memo(function SparklineCard({
   title,
   unit,
@@ -23,7 +22,13 @@ export const SparklineCard = memo(function SparklineCard({
   series,
   colors,
 }: SparklineCardProps) {
-  const data1 = [22, 24, 23, 25, 18, 10, -5, 5, 15, 28, 26, 27, 29];
+  const values = useMemo(
+    () =>
+      series.length > 0
+        ? [...series].sort((a, b) => a.t - b.t).map((d) => d.value)
+        : [],
+    [series],
+  );
 
   const lastVal =
     !empty && series.length > 0 ? series[series.length - 1].value.toFixed(1) : '—';
@@ -40,7 +45,13 @@ export const SparklineCard = memo(function SparklineCard({
         </Text>
       </View>
       <View style={styles.chartBlock}>
-        <Sparkline data={data1} unit=" °C" />
+        {empty || values.length === 0 ? (
+          <Text style={[textScale.sm, { color: colors.mutedForeground, textAlign: 'center' }]}>
+            Not enough samples for the chart
+          </Text>
+        ) : (
+          <Sparkline data={values} unit=" °C" />
+        )}
       </View>
     </View>
   );
