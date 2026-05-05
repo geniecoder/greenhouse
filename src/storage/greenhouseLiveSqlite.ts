@@ -193,6 +193,15 @@ export async function getEventsDescending(db: SQLiteDatabase): Promise<ApiAnomal
   }));
 }
 
+/** Replace chart history + thresholds from an HTTP snapshot without clearing the events table (reconnect heal). */
+export async function replaceHistoryWithSnapshot(db: SQLiteDatabase, snap: ApiSnapshot): Promise<void> {
+  await upsertRanges(db, snap.ranges);
+  await runGreenhouseLiveWriteTxn(db, async (conn) => {
+    await conn.runAsync('DELETE FROM history');
+  });
+  await bulkSeedHistory(db, snap.history);
+}
+
 export async function seedFromSnapshot(db: SQLiteDatabase, snap: ApiSnapshot): Promise<void> {
   await resetGreenhouseLiveData(db);
   await upsertRanges(db, snap.ranges);

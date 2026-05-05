@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
-import { Platform, UIManager } from 'react-native';
+import { LogBox, Platform, UIManager } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { palette } from '@/src/styles/colors';
+
+LogBox.ignoreAllLogs(true);
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

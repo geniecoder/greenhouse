@@ -22,6 +22,7 @@ import {
   getHistoryAsc,
   getRangesMap,
   openGreenhouseLiveDb,
+  replaceHistoryWithSnapshot,
   seedFromSnapshot,
   upsertEventRow,
   upsertHistoryRow,
@@ -220,12 +221,44 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
       setSnapshotIso(msg.timestamp);
     }
 
+    async function resyncAfterWsReconnect() {
+      const db = dbRef.current;
+      if (!db || !isActive()) return;
+      try {
+        const snap = await fetchSnapshot();
+        if (!isActive()) return;
+        await replaceHistoryWithSnapshot(db, snap);
+        transport.lastSeq = snap.seq;
+        lastMsgAtRef.current = Date.now();
+        transport.ema = 0;
+        rangesRef.current = snap.ranges;
+        setSensors(snapshotToSensorModels(snap));
+        setSiteName(prettifyGreenhouseId(snap.greenhouseId));
+        setSummary(snap.summary);
+        setConnectionStatus(apiStatusToConnection(snap.status));
+        setSnapshotIso(snap.timestamp);
+        const rows = await getHistoryAsc(db);
+        if (!isActive()) return;
+        setSparklineSeries(historyRowsToTempSeries(rows));
+        setDebugMetrics((m) => ({
+          ...m,
+          sequence: snap.seq,
+          version: snap.version,
+          lastEventAgeMs: 0,
+        }));
+      } catch {
+        /* WS may still deliver deltas — refresh chart from anything already in SQLite */
+        await refreshSparklineFromDb();
+      }
+    }
+
     const socket = createWebSocketClient(WS_URL, {
       isActive,
       onConnected: (isReconnect) => {
         setConnectionStatus('live');
         if (isReconnect) {
           setDebugMetrics((m) => ({ ...m, reconnectCount: m.reconnectCount + 1 }));
+          void resyncAfterWsReconnect();
         }
       },
       onReconnecting: () => setConnectionStatus('reconnecting'),
