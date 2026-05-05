@@ -1,13 +1,16 @@
 import { Stack } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { Platform, UIManager } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { palettes } from '@/src/ui/theme';
+import { palette } from '@/src/styles/colors';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
-  const backgroundColor = palettes[scheme === 'dark' ? 'dark' : 'light'].background;
+  const backgroundColor = palette.background;
 
   return (
     <SafeAreaProvider>
