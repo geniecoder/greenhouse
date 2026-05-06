@@ -51,17 +51,6 @@ A React Native app that monitors greenhouse sensors in real time — temperature
 
 ---
 
-## Lint & type-check
-
-No automated test suite yet. Run these before committing:
-
-```bash
-npx tsc --noEmit   # catches type errors across the whole project
-npm run lint       # Expo-flavoured ESLint
-```
-
----
-
 ## How the transport works
 
 | Stage | What happens |
