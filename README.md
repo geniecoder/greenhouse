@@ -51,17 +51,6 @@ A React Native app that monitors greenhouse sensors in real time — temperature
 
 ---
 
-## Run
-
-```bash
-npm start          # Expo Dev Tools (Metro) — press a for Android, i for iOS
-npm run android    # full native Android build + launch
-npm run ios        # full native iOS build + launch
-npm run web        # web preview (camera / SQLite features are Android/iOS only)
-```
-
----
-
 ## Lint & type-check
 
 No automated test suite yet. Run these before committing:
