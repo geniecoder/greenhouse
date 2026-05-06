@@ -69,12 +69,163 @@ npm run lint       # Expo-flavoured ESLint
 
 ---
 
-## Trade-offs & known limits
+# Design & Trade-offs Note
 
-- **Plain HTTP / LAN IP.** The dev defaults use cleartext HTTP on a local IP — simple for a bench setup, not suitable for production. Swap in HTTPS/WSS and move the host to an env variable when you ship.
+## 1. Overview
 
-- **Capped SQLite.** Chart history keeps the last 20 readings (`HISTORY_CAP`) and the event feed keeps the last 20 anomalies (`EVENT_CAP`). Older rows are pruned automatically so the database stays small. Raise the caps in `src/config/greenhouseLive.ts` if you need more.
+This project implements a real-time greenhouse monitoring system with a mobile client and backend service.
 
-- **Best-effort photo uploads.** Failed uploads stay queued locally and retry on the next connected session. If a file is somehow missing from disk the queue entry is silently cleaned up. The multipart field name (`image`) must match whatever your backend expects.
+**Components:**
+- Mobile App: React Native (TypeScript)
+- Backend: .NET (C# Web API + WebSocket)
+- Storage: SQLite (client-side), server-side storage (in-memory / DB)
+- Transport: HTTP (snapshot) + WebSocket (real-time)
 
-- **Web is limited.** `npm run web` works for layout testing but camera capture, file system access, and SQLite are all Android/iOS only.
+**Goal:**
+Provide low-latency live sensor updates while ensuring reliable initial load, offline support, and resilience to network interruptions.
+
+---
+
+## 2. Architecture & Data Flow
+
+**Flow:**
+1. App starts → calls REST API → fetches snapshot (last N readings)
+2. App connects to WebSocket → receives real-time updates
+3. Incoming data is:
+   - Stored in SQLite
+   - Passed to state/reducer → UI updates
+4. On disconnect → reconnect → resync using snapshot API
+
+---
+
+## 3. Key Design Decisions
+
+### 3.1 Hybrid Transport (HTTP + WebSocket)
+
+- HTTP (REST) → initial data fetch  
+- WebSocket → real-time streaming  
+
+**Why:**
+- Avoids inefficient polling
+- Reduces latency
+- Clean separation between snapshot and live updates
+
+---
+
+### 3.2 Local Storage (SQLite)
+
+All readings are stored locally.
+
+**Why:**
+- Enables offline support
+- Faster UI rendering
+- Reduces dependency on network
+
+---
+
+### 3.3 Frontend Structure
+
+**Why:**
+- Clear separation of concerns
+- Easier testing and scalability
+- Maintainable codebase
+
+---
+
+### 3.4 Event-driven State Management
+
+WebSocket messages are processed through reducer/state updates.
+
+**Why:**
+- Predictable state changes
+- Easier handling of edge cases (duplicates, ordering, bursts)
+
+---
+
+## 4. Trade-offs
+
+### 4.1 WebSocket vs Polling
+
+| Option     | Pros                     | Cons                              |
+|------------|--------------------------|-----------------------------------|
+| WebSocket  | Real-time, efficient     | More complex (reconnect handling) |
+| Polling    | Simple                   | High latency, network overhead    |
+
+**Decision:** WebSocket for real-time updates.
+
+---
+
+### 4.2 SQLite vs Cloud-only Storage
+
+| Option        | Pros                    | Cons               |
+|---------------|-------------------------|--------------------|
+| SQLite        | Offline, fast           | Sync complexity    |
+| Cloud only    | Simpler backend         | No offline support |
+
+**Decision:** SQLite for better user experience.
+
+---
+
+### 4.3 Single Payload vs Multiple Event Types
+
+| Option               | Pros                | Cons                 |
+|---------------------|---------------------|----------------------|
+| Single JSON payload | Simple parsing      | Slightly larger size |
+| Multiple events     | Flexible            | More complex logic   |
+
+**Decision:** Single structured payload.
+
+---
+
+### 4.4 WebSocket vs MQTT
+
+| Option     | Pros                        | Cons                    |
+|------------|-----------------------------|--------------------------|
+| WebSocket  | Easy integration            | Less IoT optimized       |
+| MQTT       | Lightweight, pub/sub model  | Requires broker setup    |
+
+**Decision:** WebSocket for simplicity and faster development.
+
+---
+
+## 5. Reliability & Edge Cases
+
+Handled scenarios:
+- Duplicate events → deduplicated using ID/timestamp
+- Out-of-order events → sorted/validated in reducer
+- Burst updates → handled safely without state corruption
+- Disconnect/reconnect → auto reconnect + resync
+- Partial events (e.g., anomaly_event) → still update latest reading
+
+---
+
+## 6. Scalability Considerations
+
+Future improvements:
+- WebSocket scaling (load balancer, sticky sessions)
+- Message queue (Kafka / RabbitMQ)
+- Persistent backend storage (PostgreSQL / time-series DB)
+- Authentication and authorization
+- Rate limiting and backpressure handling
+
+---
+
+## 7. Future Enhancements
+
+- Background sync when app reconnects
+- Offline upload queue (images, logs)
+- Push notifications for alerts
+- Historical analytics dashboard
+- Multi-device/sensor support
+
+---
+
+## 8. Summary
+
+The system uses a hybrid communication model (HTTP + WebSocket) combined with local storage (SQLite) to balance:
+
+- Performance (real-time updates)
+- Reliability (resync and offline support)
+- Simplicity (clean architecture)
+
+The design prioritizes user experience and developer productivity while remaining scalable for future growth.
