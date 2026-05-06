@@ -1,6 +1,6 @@
 /** Cleartext dev LAN — greenhouse snapshot HTTP + WS. */
 
-export const GREENHOUSE_LIVE_HOST = '192.168.1.140';
+export const GREENHOUSE_LIVE_HOST = '192.168.1.212';
 export const GREENHOUSE_LIVE_PORT = 5050;
 
 export const SNAPSHOT_HTTP_BASE = `http://${GREENHOUSE_LIVE_HOST}:${GREENHOUSE_LIVE_PORT}`;

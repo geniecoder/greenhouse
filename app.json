@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.greenhouse"
+      "bundleIdentifier": "com.anonymous.greenhouse",
+      "appleTeamId": "283JZ2PGP8"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +22,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.greenhouse"
+      "package": "com.anonymous.greenhouse",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",

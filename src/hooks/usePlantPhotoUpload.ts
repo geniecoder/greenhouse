@@ -146,7 +146,7 @@ export function usePlantPhotoUpload(greenhouseConnection: ConnectionStatus) {
     }
 
     const picked = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.82,
     });
     if (picked.canceled || !picked.assets[0]?.uri) return;

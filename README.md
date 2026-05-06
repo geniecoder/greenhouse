@@ -2,6 +2,22 @@
 
 A React Native app that monitors greenhouse sensors in real time — temperature, humidity, CO₂ — with a live sparkline, anomaly event feed, offline SQLite cache, and a camera FAB that queues plant photos for upload.
 
+> **Backend:** The companion .NET server that streams sensor data is at [geniecoder/GreehouseServer](https://github.com/geniecoder/GreehouseServer).
+
+---
+
+## Demo
+
+▶ [Watch app demo on YouTube](https://youtube.com/shorts/ZzCebnnnHqs?feature=share)
+
+---
+
+## Screenshots
+
+| | | | |
+|:---:|:---:|:---:|:---:|
+| ![](assets/images/d1.PNG) | ![](assets/images/d2.PNG) | ![](assets/images/d3.PNG) | ![](assets/images/d4.PNG) |
+
 ---
 
 ## Setup
@@ -14,9 +30,9 @@ A React Native app that monitors greenhouse sensors in real time — temperature
    npm install
    ```
 
-2. **Point it at your backend**
+2. **Start the backend server**
 
-   Open `src/config/greenhouseLive.ts` and set the two constants at the top:
+   Clone and run [geniecoder/GreehouseServer](https://github.com/geniecoder/GreehouseServer) on the same LAN, then open `src/config/greenhouseLive.ts` and point the app at it:
 
    ```ts
    export const GREENHOUSE_LIVE_HOST = '192.168.1.140'; // your server IP

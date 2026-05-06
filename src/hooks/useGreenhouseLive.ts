@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import type { EventListItem } from '@/src/components/organisms/EventList';
 import { EMA_ALPHA, WS_URL } from '@/src/config/greenhouseLive';
@@ -82,6 +83,10 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
     const isActive = () => !cancelled && bootKeyRef.current === session;
 
     const transport = { lastSeq: null as number | null, ema: 0 };
+    // Tracks whether the WS has gone live at least once this boot.
+    // onReconnecting shows OFFLINE while it hasn't (server was never reachable),
+    // and RECONNECTING once it has (previously live, now dropped).
+    let wasEverLive = false;
 
     async function refreshSparklineFromDb() {
       const db = dbRef.current;
@@ -265,13 +270,17 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
     const socket = createWebSocketClient(WS_URL, {
       isActive,
       onConnected: (isReconnect) => {
+        wasEverLive = true;
         setConnectionStatus('live');
         if (isReconnect) {
           setDebugMetrics((m) => ({ ...m, reconnectCount: m.reconnectCount + 1 }));
-          void resyncAfterWsReconnect();
         }
+        // Always resync on connect: covers offline→live (first connect) and dropped→live (reconnect).
+        void resyncAfterWsReconnect();
       },
-      onReconnecting: () => setConnectionStatus('reconnecting'),
+      // Show OFFLINE while the server has never been reachable this session;
+      // only switch to RECONNECTING after we've been live and then lost the connection.
+      onReconnecting: () => setConnectionStatus(wasEverLive ? 'reconnecting' : 'offline'),
       onJsonMessage: (data) => {
         if (!isWsMessage(data)) return;
         void handleWsMessage(data);
@@ -302,7 +311,9 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
           if (!isActive()) return;
           if (hydrated) {
             setError(null);
-            /* Leave WebSocket disconnected until Retry/snapshot succeeds — avoids reconnect noise while server is down. */
+            // Start WS even while offline: backoff loop retries silently until the server answers,
+            // then onConnected → resyncAfterWsReconnect() brings everything live automatically.
+            socket.connect();
           } else {
             setError(fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr)));
             setConnectionStatus('offline');
@@ -317,8 +328,17 @@ export function useGreenhouseLive(): UseGreenhouseLiveResult {
       }
     })();
 
+    // When the app comes back to the foreground while offline, nudge the retry immediately
+    // instead of waiting for the next WS backoff tick (which can be up to 30 s).
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && isActive()) {
+        socket.connect();
+      }
+    });
+
     return () => {
       cancelled = true;
+      appStateSub.remove();
       socket.disconnect();
     };
   }, [bootKey]);
